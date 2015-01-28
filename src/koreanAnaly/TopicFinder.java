@@ -1,15 +1,23 @@
 package koreanAnaly;
 
+import java.io.File;
 import java.io.FileReader;
 import java.util.List;
+
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
+
 import com.twitter.penguin.korean.TwitterKoreanProcessorJava;
 import com.twitter.penguin.korean.tokenizer.KoreanTokenizer;
 
 public class TopicFinder {
-	private static int numOfArticle = 21;
+	private static int numOfArticle;
+	private static String date  = "150126";
+	
 	public static void main(String[] args){
+		
+		File dir = new File("C:/Users/태욱/Desktop/"+date+"/politics/");
+		numOfArticle = dir.list().length;
 
 		JSONParser parser=new JSONParser();
 		String title = "";
@@ -22,7 +30,7 @@ public class TopicFinder {
 		for(int i=0; i<numOfArticle; i++){
 
 			try{
-				Object obj = parser.parse(new FileReader("C:/Users/태욱/Desktop/150123/politics/politics_"+(i+1)+".json"));
+				Object obj = parser.parse(new FileReader("C:/Users/태욱/Desktop/"+date+"/politics/politics_"+(i+1)+".json"));
 				JSONObject jsonObject = (JSONObject) obj;
 				title = (String) jsonObject.get("title");
 				content = (String) jsonObject.get("content");
@@ -61,7 +69,7 @@ public class TopicFinder {
 		for(int i=0; i<numOfArticle; i++){
 
 			try{
-				Object obj = parser.parse(new FileReader("C:/Users/태욱/Desktop/150123/politics/politics_"+(i+1)+".json"));
+				Object obj = parser.parse(new FileReader("C:/Users/태욱/Desktop/"+date+"/politics/politics_"+(i+1)+".json"));
 				JSONObject jsonObject = (JSONObject) obj;
 
 				content = (String) jsonObject.get("content");
@@ -136,7 +144,7 @@ public class TopicFinder {
 						sim += tfIdfVector[cnt][cnt3] * tfIdfVector[cnt2][cnt3];
 					}
 					//sim = sim / vocaSet.length;
-					if(sim > 15){
+					if(sim > 20){
 						System.out.println((cnt+1)+"번 기사와 "+(cnt2+1)+"번 기사는 유사합니다");
 					}
 					sim = 0;
