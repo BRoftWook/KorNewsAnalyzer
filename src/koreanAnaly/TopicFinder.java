@@ -1,7 +1,10 @@
 package koreanAnaly;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 
 import org.json.simple.JSONObject;
@@ -11,145 +14,122 @@ import com.twitter.penguin.korean.TwitterKoreanProcessorJava;
 import com.twitter.penguin.korean.tokenizer.KoreanTokenizer;
 
 public class TopicFinder {
-	private static int numOfArticle;
-	private static String date  = "150126";
-	
-	public static void main(String[] args){
-		
-		File dir = new File("C:/Users/태욱/Desktop/"+date+"/politics/");
-		numOfArticle = dir.list().length;
 
-		JSONParser parser=new JSONParser();
-		String title = "";
-		String content = "";
-		
+	private static String date  = "150126";
+	private static String dirPath = "C:/Users/태욱/Desktop/"+date+"/politics/";
+	private static File dir = new File(dirPath);
+	private static int numOfArticle = dir.list().length;
+
+
+	public static void main(String[] args){
+
 		//Object for making Vocabulary Set
-		WordVector termFreqVector = new WordVector();
-		
-		//Make Vocabulary Set for entire articles		
+		WordVector setOfVoca = new WordVector();
+		WordVector[] tfOfArticle = new WordVector[numOfArticle];
+		WordVector[] tfidfOfArticle = new WordVector[numOfArticle];
+		for(int cnt=0; cnt<numOfArticle; cnt++){
+			tfOfArticle[cnt] = new WordVector();
+			tfidfOfArticle[cnt] = new WordVector();
+		}
+		double[][] tfidf;
+		double[] idfVector;
+
+		//Make Vocabulary Set for entire articles
 		for(int i=0; i<numOfArticle; i++){
 
+			JSONParser parser = new JSONParser();
+			TwitterKoreanProcessorJava processor = new TwitterKoreanProcessorJava.Builder().build();
+			List<KoreanTokenizer.KoreanToken> parsed;
+			String title = "";
+			String content = "";
+
 			try{
-				Object obj = parser.parse(new FileReader("C:/Users/태욱/Desktop/"+date+"/politics/politics_"+(i+1)+".json"));
+
+				Object obj = parser.parse(new FileReader(dirPath+"politics_"+(i+1)+".json"));
 				JSONObject jsonObject = (JSONObject) obj;
 				title = (String) jsonObject.get("title");
 				content = (String) jsonObject.get("content");
 				content = content.split("기자 = ")[1];
-
+				//				System.out.println((i+1)+"번째 기사 제목 : "+title);
 			}catch(Exception e){
 				e.printStackTrace();
 			}
-			System.out.println((i+1)+"번째 기사 제목 : "+title);
-			TwitterKoreanProcessorJava processor = new TwitterKoreanProcessorJava.Builder().build();
-
-			processor = new TwitterKoreanProcessorJava.Builder()
-			//		.disableStemmer()
-			//	.disableNormalizer()
-			.build();
-
-			List<KoreanTokenizer.KoreanToken> parsed;
 
 			parsed = processor.tokenize(content);
-
 			Object[] parsedResult = parsed.toArray();
 
 			for(int cnt=0;cnt<parsedResult.length; cnt++){
-				String word = parsedResult[cnt].toString();
-				termFreqVector.putWord(word);
+				setOfVoca.putWord(parsedResult[cnt].toString());
 			}
 		}
 
 		//Vocabulary Set for Today's News is Created!
-		String[] vocaSet = termFreqVector.toStringArray();
+		String[] vocaSet = setOfVoca.toStringArray();
+		idfVector = new double[vocaSet.length];
+		tfidf = new double[numOfArticle][vocaSet.length];
 
 		//TermFreqVectors for each article
-		Integer[][] TermFreqOfArticle = new Integer[numOfArticle][vocaSet.length];
-
-
 		for(int i=0; i<numOfArticle; i++){
 
-			try{
-				Object obj = parser.parse(new FileReader("C:/Users/태욱/Desktop/"+date+"/politics/politics_"+(i+1)+".json"));
-				JSONObject jsonObject = (JSONObject) obj;
+			JSONParser parser = new JSONParser();
+			TwitterKoreanProcessorJava processor = new TwitterKoreanProcessorJava.Builder().build();
+			List<KoreanTokenizer.KoreanToken> parsed;
+			String content = "";
 
+			tfOfArticle[i].setVocaSet(vocaSet);
+
+			try{
+				Object obj = parser.parse(new FileReader(dirPath+"politics_"+(i+1)+".json"));
+				JSONObject jsonObject = (JSONObject) obj;
 				content = (String) jsonObject.get("content");
 				content = content.split("기자 = ")[1];
-
-
 			}catch(Exception e){
 				e.printStackTrace();
 			}
 
-			TwitterKoreanProcessorJava processor = new TwitterKoreanProcessorJava.Builder().build();
-
-			processor = new TwitterKoreanProcessorJava.Builder()
-			//		.disableStemmer()
-			//	.disableNormalizer()
-			.build();
-
-			List<KoreanTokenizer.KoreanToken> parsed;
-
 			parsed = processor.tokenize(content);
-
 			Object[] parsedResult = parsed.toArray();
 
-		//Calculate Term Frequency Vectors for each Article
-			Integer[] TermFreqVector = new Integer[vocaSet.length];
+			//Calculate Term Frequency Vectors for each Article			
+			for(int cnt=0; cnt<parsedResult.length; cnt++){
+				String word = parsedResult[cnt].toString();
+				tfOfArticle[i].putWord(word);
+			}
 
-			for(int cnt=0; cnt<TermFreqVector.length; cnt++){
-				TermFreqVector[cnt] = 0; //Initialize value
-				
-				//For each word in the Vocabulary Set, count the frequency of the word in the given article.
-				for(int cnt2=0; cnt2<parsedResult.length; cnt2++){
-					if(vocaSet[cnt].equals(parsedResult[cnt2].toString())){
-						TermFreqVector[cnt]++;
-					}
+			//Calculate DF for words in Vocabulary Set
+			double[] tfVector = tfOfArticle[i].getTermFreqVector();
+
+			for(int cnt=0; cnt<vocaSet.length; cnt++){
+				if(tfVector[cnt] != 0){
+					idfVector[cnt]++;
 				}
-			}
-			for(int cnt=0; cnt<TermFreqVector.length; cnt++){
-				TermFreqOfArticle[i][cnt] = TermFreqVector[cnt];
+				double temp = 0;
+				temp = tfVector[cnt];
+				tfidf[i][cnt] = temp;
 			}
 		}
 
-		//Calculate DF for each word
-		double[] dfVector = new double[vocaSet.length];
-		for(int cnt=0; cnt<dfVector.length; cnt++){
-			dfVector[cnt] = 0;
-		}
-
-		for(int cnt=0; cnt<numOfArticle; cnt++){
-			for(int cnt2=0; cnt2<vocaSet.length; cnt2++){
-
-				if(TermFreqOfArticle[cnt][cnt2]!=0) dfVector[cnt2]++;
-
-			}
+		//Calculate IDF Vector
+		for(int cnt=0; cnt<idfVector.length; cnt++){
+			idfVector[cnt] = 1.0/idfVector[cnt];
 		}
 
 		//Calculate TF x IDF Vectors for each article
-		double[][] tfIdfVector = new double[numOfArticle][vocaSet.length];
 		for(int cnt=0; cnt<numOfArticle; cnt++){
-			for(int cnt2=0; cnt2<vocaSet.length; cnt2++){
-				tfIdfVector[cnt][cnt2] = TermFreqOfArticle[cnt][cnt2] * (1 / dfVector[cnt2]);
+			for(int cnt2=0; cnt2< vocaSet.length; cnt2++){
+				double temp = 0;
+				temp = tfidf[cnt][cnt2]*idfVector[cnt2];
+				tfidf[cnt][cnt2] = temp;
 			}
 		}
-
-		//Calculate Similarity between Articles
-		double sim = 0;
-		for(int cnt=0; cnt<tfIdfVector.length; cnt++){
-
-			for(int cnt2=0; cnt2<tfIdfVector.length; cnt2++){
-
-				if(cnt != cnt2){
-					for(int cnt3=0; cnt3<vocaSet.length; cnt3++){
-						sim += tfIdfVector[cnt][cnt3] * tfIdfVector[cnt2][cnt3];
-					}
-					//sim = sim / vocaSet.length;
-					if(sim > 20){
-						System.out.println((cnt+1)+"번 기사와 "+(cnt2+1)+"번 기사는 유사합니다");
-					}
-					sim = 0;
-				}
+		
+		for(int row=0; row<numOfArticle; row++){
+			for(int col=0; col<numOfArticle; col++){
+				double sim = WordVector.similarity(tfidf[row],tfidf[col]);
+				System.out.print(sim + " ");
 			}
+			System.out.println();
 		}
+		
 	}
 }
