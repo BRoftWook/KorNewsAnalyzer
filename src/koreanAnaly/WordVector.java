@@ -3,8 +3,8 @@ package koreanAnaly;
 import java.util.HashMap;
 
 public class WordVector {
-	private static int numVoca;
-	private static HashMap<String,Double> termFreqVector = new HashMap<String, Double>();
+	private int numVoca;
+	private HashMap<String,Double> termFreqVector = new HashMap<String, Double>();
 
 	public WordVector(){
 		numVoca = 0;
@@ -75,16 +75,6 @@ public class WordVector {
 		}
 	}
 	
-	private static double vectorSize(WordVector wv){
-		double size = 0;
-		double[] tfidf = wv.getTermFreqVector();
-		for(int cnt=0; cnt<tfidf.length; cnt++){
-			size += tfidf[cnt]*tfidf[cnt];
-		}
-		size = Math.sqrt(size);
-		return size;
-	}
-	
 	private static double vectorSize(double[] tfidf){
 		double size = 0;
 		for(int cnt=0; cnt<tfidf.length; cnt++){
@@ -101,7 +91,7 @@ public class WordVector {
 		for(int cnt=0; cnt<wv1.getNumOfVoca(); cnt++){
 			similarity += tfidf1[cnt] * tfidf2[cnt];
 		}
-		similarity = similarity / (vectorSize(wv1)*vectorSize(wv2));
+		similarity = similarity / (vectorSize(tfidf1)*vectorSize(tfidf2));
 		return similarity;
 	}
 	

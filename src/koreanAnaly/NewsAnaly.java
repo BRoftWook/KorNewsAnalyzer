@@ -237,7 +237,7 @@ public class NewsAnaly {
 							//확률 계산
 							probName = Math.pow((probLength * probLastName * probNotDicWord * probNotSyntNoun), 1.0/4);
 						}
-						if(probName > 0.5){
+						if(probName > 0.8){
 							System.out.print(noun+" ");
 						}
 					}			
