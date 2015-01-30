@@ -9,7 +9,7 @@ public class WordVector {
 	public WordVector(){
 		numVoca = 0;
 	}
-	
+
 	public HashMap<String,Double> getVector(){
 		return termFreqVector;
 	}
@@ -24,6 +24,17 @@ public class WordVector {
 			else{
 				termFreqVector.put(word, termFreqVector.get(word) + 1.0);
 			}
+		}
+	}
+
+	public void putName(String word){
+		if(!termFreqVector.containsKey(word)){
+			termFreqVector.put(word, 1.0);
+			numVoca++;
+		}
+
+		else{
+			termFreqVector.put(word, termFreqVector.get(word) + 1.0);
 		}
 	}
 
@@ -43,17 +54,17 @@ public class WordVector {
 
 	public String[] toStringArray(){
 		String[] vocaSet = new String[numVoca];
-		
+
 		for(int cnt = 0; cnt< termFreqVector.keySet().size(); cnt++){
 			String key = termFreqVector.keySet().toArray()[cnt].toString();
 			vocaSet[cnt] = key;
 		}
 		return vocaSet;
 	}
-	
+
 	public double[] getTermFreqVector(){
 		double[] termVector = new double[numVoca];
-		
+
 		for(int cnt = 0; cnt< numVoca; cnt++){
 			double value = termFreqVector.get(termFreqVector.keySet().toArray()[cnt]);
 			termVector[cnt] = value;
@@ -67,14 +78,14 @@ public class WordVector {
 		}
 		numVoca = vocaSet.length;
 	}
-	
+
 	public void setTermFreqSet(double[] termFreqSet){
 		for(int cnt=0; cnt<termFreqSet.length; cnt++){
 			String word = (String) termFreqVector.keySet().toArray()[cnt];
 			termFreqVector.put(word, termFreqSet[cnt]);
 		}
 	}
-	
+
 	private static double vectorSize(double[] tfidf){
 		double size = 0;
 		for(int cnt=0; cnt<tfidf.length; cnt++){
@@ -83,7 +94,7 @@ public class WordVector {
 		size = Math.sqrt(size);
 		return size;
 	}
-	
+
 	public static double similarity(WordVector wv1, WordVector wv2){
 		double similarity = 0;
 		double[] tfidf1 = wv1.getTermFreqVector();
@@ -94,7 +105,7 @@ public class WordVector {
 		similarity = similarity / (vectorSize(tfidf1)*vectorSize(tfidf2));
 		return similarity;
 	}
-	
+
 	public static double similarity(double[] tfidf1, double[] tfidf2){
 		double similarity = 0;
 		for(int cnt=0; cnt<tfidf1.length; cnt++){
@@ -103,7 +114,7 @@ public class WordVector {
 		similarity = similarity / (vectorSize(tfidf1)*vectorSize(tfidf2));
 		return similarity;
 	}
-	
+
 	public static String printVector(double[] pv){
 		String result = "";
 		for(int cnt=0; cnt<pv.length; cnt++){
@@ -111,7 +122,7 @@ public class WordVector {
 		}
 		return result;
 	}
-	
+
 	public static String printVector(String[] pv){
 		String result = "";
 		for(int cnt=0; cnt<pv.length; cnt++){

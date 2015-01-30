@@ -10,7 +10,7 @@ import com.twitter.penguin.korean.tokenizer.KoreanTokenizer;
 
 public class TopicFinder {
 
-	private static String date  = "150128";
+	private static String date  = "150126";
 	private static String dirPath = "C:/Users/태욱/Desktop/"+date+"/politics/";
 	private static File dir = new File(dirPath);
 	private static int numOfArticle = dir.list().length;
@@ -95,7 +95,7 @@ public class TopicFinder {
 					String titleWord = parsedTitleResult[cnt2].toString();
 					//Give Weight for the words in title
 					if(word.equals(titleWord)){
-						for(int weight = 0; weight< 10; weight++){
+						for(int weight = 0; weight< 100; weight++){
 							tfOfArticle[i].putWord(word);
 						}
 					}
