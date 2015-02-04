@@ -16,8 +16,9 @@ public class NewsAnaly {
 
 	private static int numOfArticle;
 	private static int numOfWord = 33371;
+	private static double cutOff = 0.5;
 
-	//날짜 입력 => [기사 제목 : 사람 이름들 출력]  + [그날에 기사에 나온 사람들 명단 WordVector로 반환]
+	//날짜 입력 => [기사 제목 : 사람 이름들 출력]
 	public static void getNamesInArticle(int date) throws FileNotFoundException{
 		Integer dt = new Integer(date);
 		if(dt.toString().length() != 6){
@@ -219,7 +220,7 @@ public class NewsAnaly {
 							//확률 계산
 							probName = Math.pow((probLength * probLastName * probNotDicWord * probNotSyntNoun), 1.0/4);
 						}
-						if(probName > 0.6){
+						if(probName > cutOff){
 							System.out.print(noun + " ");
 							result.putWord(noun);
 						}
@@ -409,7 +410,7 @@ public class NewsAnaly {
 						//확률 계산
 						probName = Math.pow((probLength * probLastName * probNotDicWord * probNotSyntNoun), 1.0/4);
 					}
-					if(probName > 0.3){
+					if(probName > cutOff){
 						result.putName(noun);
 					}
 				}			

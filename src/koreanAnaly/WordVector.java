@@ -114,6 +114,25 @@ public class WordVector {
 		similarity = similarity / (vectorSize(tfidf1)*vectorSize(tfidf2));
 		return similarity;
 	}
+	
+	public static double jacqSimilarity(WordVector personVector1, WordVector personVector2){
+		
+		double sim = 0;
+		double numOfPerson1 = 0;
+		double numOfPerson2 = 0;
+		double interSection = 0;
+		String[] setOfPerson = personVector1.toStringArray();
+		double[] personFreq1 = personVector1.getTermFreqVector();
+		double[] personFreq2 = personVector2.getTermFreqVector();
+		for(int cnt=0; cnt<setOfPerson.length; cnt++){
+			if(personFreq1[cnt] != 0) numOfPerson1++;
+			if(personFreq2[cnt] != 0) numOfPerson2++;
+			if(personFreq1[cnt] != 0 && personFreq2[cnt] != 0) interSection++;
+		}
+		sim = interSection / (numOfPerson1 + numOfPerson2);
+		
+		return sim;
+	}
 
 	public static String printVector(double[] pv){
 		String result = "";
@@ -129,5 +148,20 @@ public class WordVector {
 			result += pv[cnt]+",";
 		}
 		return result;
+	}
+
+	public WordVector append(WordVector wv){
+		String[] toBeAddedVoca = wv.toStringArray();
+		double[] toBeAddedFreq = wv.getTermFreqVector();
+		for(int cnt=0; cnt<toBeAddedVoca.length; cnt++){
+			if(termFreqVector.get(toBeAddedVoca[cnt])!=null){
+				termFreqVector.put(toBeAddedVoca[cnt], termFreqVector.get(toBeAddedVoca[cnt]) + toBeAddedFreq[cnt]);
+			}
+			else{
+				termFreqVector.put(toBeAddedVoca[cnt], 1.0);
+				numVoca++;
+			}
+		}
+		return this;
 	}
 }
