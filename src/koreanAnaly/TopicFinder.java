@@ -16,11 +16,12 @@ import org.paukov.combinatorics.*;
 
 public class TopicFinder {
 
-	private static String date  = "150128";
+	private static String date  = "150201";
 	private static String dirPath = "C:/Users/태욱/Desktop/"+date+"/politics/";
 	private static File dir = new File(dirPath);
 	private static int numOfArticle = dir.list().length;
-
+	private static double cutoff = 0.2;
+	
 	public static void main(String[] args){
 
 		//Object for making Vocabulary Set
@@ -156,7 +157,8 @@ public class TopicFinder {
 				double sim1 = WordVector.similarity(tfidfOfArticle[row],tfidfOfArticle[col]);
 				double sim2 = WordVector.similarity(personInArticle[row],personInArticle[col]);
 				double sim = (2*sim1 + sim2) / 3;
-				if(sim > 0.2){
+
+				if(sim > cutoff){
 					
 					similar[row][col] = 1;
 					if(row!=col) System.out.println((row+1)+"과 "+(col+1)+"은 유사합니다. 유사도 : "+ sim);
@@ -166,9 +168,7 @@ public class TopicFinder {
 				}
 			}
 		}
-		
-		System.gc();
-		
+
 		//Find Cluster of Articles
 		String[] articles = new String[numOfArticle];
 		List<Cluster> clusters = new ArrayList<Cluster>();
@@ -213,6 +213,40 @@ public class TopicFinder {
 				}
 			}
 		}
-
+		
+		//Evaluating Clustering Result
+		Object[] clusterResult = clusters.toArray();
+		WordVector[] clusterTermVector = new WordVector[clusterResult.length];
+		WordVector[] clusterPersonVector = new WordVector[clusterResult.length];
+		for(int cnt=0;cnt<clusterResult.length;cnt++){
+			clusterTermVector[cnt] = new WordVector();
+			clusterTermVector[cnt].setVocaSet(vocaSet);
+			clusterPersonVector[cnt] = new WordVector();
+			clusterPersonVector[cnt].setVocaSet(personSet);
+			
+			Cluster c = (Cluster)clusterResult[cnt];
+			Integer[] elements = c.getElements();
+			for(int cnt2=0; cnt2<elements.length; cnt2++){
+				clusterTermVector[cnt].append(tfidfOfArticle[elements[cnt2]-1]); 
+				clusterPersonVector[cnt].append(personInArticle[elements[cnt2]-1]);
+			}
+		}
+		
+		double evalOfClustering = 0;
+		for(int row = 0; row<clusterResult.length; row++){
+			for(int col = 0; col<clusterResult.length; col++){
+				if(row!=col) {
+					double termSim = WordVector.similarity(clusterTermVector[row],clusterTermVector[col]);
+					double personSim = WordVector.similarity(clusterPersonVector[row], clusterPersonVector[col]);
+					double sim = (2*termSim + personSim) / 3;
+					evalOfClustering += sim;
+				}
+			}
+		}
+		double normalizeTerm = clusterResult.length * (clusterResult.length-1) / 2; // N combination 2
+		evalOfClustering = evalOfClustering / normalizeTerm;
+		
+		System.out.println("클러스터 간 유사도(값이 낮을수록 좋습니다) : "+evalOfClustering);
+		
 	}
 }

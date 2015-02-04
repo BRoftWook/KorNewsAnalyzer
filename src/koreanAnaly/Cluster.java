@@ -47,7 +47,7 @@ public class Cluster {
 		return sizeOfCluster;
 	}
 	
-	public void print(){
+	public String print(){
 		String print = "{";
 		Object[] elements = set.toArray();
 		for(int cnt=0; cnt<elements.length; cnt++){
@@ -59,5 +59,6 @@ public class Cluster {
 			}
 		}
 		System.out.println(print);
+		return print;
 	}
 }
