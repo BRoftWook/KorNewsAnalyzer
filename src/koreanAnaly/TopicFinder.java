@@ -21,6 +21,9 @@ public class TopicFinder {
 	private static File dir = new File(dirPath);
 	private static int numOfArticle = dir.list().length;
 	private static double cutoff = 0.2;
+	private static double weightOfTermVector = 2;
+	private static double weightOfPersonVector = 1;
+	private static double weightNormalization = weightOfTermVector + weightOfPersonVector;
 	
 	public static void main(String[] args){
 
@@ -156,7 +159,7 @@ public class TopicFinder {
 			for(int col=0; col<numOfArticle; col++){
 				double sim1 = WordVector.similarity(tfidfOfArticle[row],tfidfOfArticle[col]);
 				double sim2 = WordVector.similarity(personInArticle[row],personInArticle[col]);
-				double sim = (2*sim1 + sim2) / 3;
+				double sim = (weightOfTermVector*sim1 + weightOfPersonVector*sim2) / weightNormalization;
 
 				if(sim > cutoff){
 					
@@ -238,7 +241,7 @@ public class TopicFinder {
 				if(row!=col) {
 					double termSim = WordVector.similarity(clusterTermVector[row],clusterTermVector[col]);
 					double personSim = WordVector.similarity(clusterPersonVector[row], clusterPersonVector[col]);
-					double sim = (2*termSim + personSim) / 3;
+					double sim = (weightOfTermVector*termSim + weightOfPersonVector*personSim) / weightNormalization;
 					evalOfClustering += sim;
 				}
 			}

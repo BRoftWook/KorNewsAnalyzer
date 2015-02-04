@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
+
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -16,10 +17,26 @@ public class NewsAnaly {
 
 	private static int numOfArticle;
 	private static int numOfWord = 33371;
-	private static double cutOff = 0.5;
-
-	//날짜 입력 => [기사 제목 : 사람 이름들 출력]
+	private static double cutOff=0.7;
+	private static double prLength=0.9;
+	private static double prLastName=0.7;
+	private static double prDic=0.99;
+	private static double prSynt=0.7;
+	private static String[] answerSets = new String[numOfArticle];
+	
+	NewsAnaly(double cutOff, double prLength, double prLastName, double prDic, double prSynt, String[] answers){
+		this.cutOff = cutOff;
+		this.prLength = prLength;
+		this.prLastName = prLastName;
+		this.prDic = prDic;
+		this.prSynt = prSynt;
+		this.answerSets = answers;
+	}
+	
+	//Method for NER Tagging for given Date && Parameter Tuning
 	public static void getNamesInArticle(int date) throws FileNotFoundException{
+		double[] totalScore = new double[3];
+		int sumCnt = 0;
 		Integer dt = new Integer(date);
 		if(dt.toString().length() != 6){
 			System.out.println("Input must be like YYMMDD");
@@ -151,13 +168,10 @@ public class NewsAnaly {
 
 							//글자 길이 체크
 							if(noun.length()==3){
-								probLength = 0.90;
+								probLength = prLength;
 							}
-							else if(noun.length()==2){
-								probLength = 0.07;
-							}
-							else if(noun.length()==4){
-								probLength = 0.03;
+							else if(noun.length()==2||noun.length()==4){
+								probLength = 1 - prLength;
 							}
 							else{
 								probLength = 0;
@@ -170,12 +184,7 @@ public class NewsAnaly {
 									||noun.startsWith("임")||noun.startsWith("오")||noun.startsWith("한")
 									||noun.startsWith("신")||noun.startsWith("서")||noun.startsWith("권")
 									||noun.startsWith("황")||noun.startsWith("안")||noun.startsWith("송")
-									||noun.startsWith("류")||noun.startsWith("홍"))){
-
-								probLastName = 0.55;
-
-							}
-							else if (noun.startsWith("전")
+									||noun.startsWith("류")||noun.startsWith("홍")||noun.startsWith("전")
 									||noun.startsWith("고")||noun.startsWith("문")||noun.startsWith("손")
 									||noun.startsWith("양")||noun.startsWith("배")||noun.startsWith("백")
 									||noun.startsWith("조")||noun.startsWith("허")||noun.startsWith("남")
@@ -186,20 +195,20 @@ public class NewsAnaly {
 									||noun.startsWith("주")||noun.startsWith("임")||noun.startsWith("나")
 									||noun.startsWith("신")||noun.startsWith("민")||noun.startsWith("진")
 									||noun.startsWith("지")||noun.startsWith("엄")||noun.startsWith("원")
-									||noun.startsWith("채")){
+									||noun.startsWith("채"))){
 
-								probLastName = 0.55;
+								probLastName = prLastName;
 							}
 							else{
-								probLastName = 0.10;
+								probLastName = 1 - prLastName;
 							}
 
 							//사전에 나오는 단어는 이름이 아님
-							probNotDicWord = 0.99;
+							probNotDicWord = prDic;
 
 							for(int diccnt=0; diccnt<dic.length; diccnt++){
 								if(noun.equals(dic[diccnt])) {
-									probNotDicWord = 0.01;
+									probNotDicWord = 1 - prDic;
 								}
 							}
 
@@ -211,10 +220,10 @@ public class NewsAnaly {
 								}
 							}
 							if(isNotSyntNoun == true){
-								probNotSyntNoun = 0.7;
+								probNotSyntNoun = prSynt;
 							}
 							else{
-								probNotSyntNoun = 0.3;
+								probNotSyntNoun = 1 - prSynt;
 							}
 
 							//확률 계산
@@ -222,16 +231,29 @@ public class NewsAnaly {
 						}
 						if(probName > cutOff){
 							System.out.print(noun + " ");
-							result.putWord(noun);
+							result.putName(noun);
 						}
 					}			
 				}				
 			}
 			System.out.println();
+				
+			if(!answerSets[i].isEmpty()){
+			double[] tempScore = performanceScore(result,answerSets[i]);
+			totalScore[0] += tempScore[0];
+			totalScore[1] += tempScore[1];
+			totalScore[2] += tempScore[2];
+			sumCnt++;
+			}
+			result = new WordVector();
 		}
+		totalScore[0] = totalScore[0]/sumCnt;
+		totalScore[1] = totalScore[1]/sumCnt;
+		totalScore[2] = totalScore[2]/sumCnt;
+		System.out.println("P mean: "+totalScore[0]+", R mean: "+totalScore[1]+", F mean: "+totalScore[2]);
 	}
 	
-	//기사 본문 => 기사에 나온 사람들 명단 WordVector로 반환
+	//Method Used In TopicFinder
 	public static WordVector getNamesInArticle(String content) throws FileNotFoundException{
 
 		WordVector result = new WordVector();
@@ -341,13 +363,10 @@ public class NewsAnaly {
 
 						//글자 길이 체크
 						if(noun.length()==3){
-							probLength = 0.90;
+							probLength = prLength;
 						}
-						else if(noun.length()==2){
-							probLength = 0.07;
-						}
-						else if(noun.length()==4){
-							probLength = 0.03;
+						else if(noun.length()==2||noun.length()==4){
+							probLength = 1 - prLength;
 						}
 						else{
 							probLength = 0;
@@ -360,12 +379,7 @@ public class NewsAnaly {
 								||noun.startsWith("임")||noun.startsWith("오")||noun.startsWith("한")
 								||noun.startsWith("신")||noun.startsWith("서")||noun.startsWith("권")
 								||noun.startsWith("황")||noun.startsWith("안")||noun.startsWith("송")
-								||noun.startsWith("류")||noun.startsWith("홍"))){
-
-							probLastName = 0.55;
-
-						}
-						else if (noun.startsWith("전")
+								||noun.startsWith("류")||noun.startsWith("홍")||noun.startsWith("전")
 								||noun.startsWith("고")||noun.startsWith("문")||noun.startsWith("손")
 								||noun.startsWith("양")||noun.startsWith("배")||noun.startsWith("백")
 								||noun.startsWith("조")||noun.startsWith("허")||noun.startsWith("남")
@@ -376,20 +390,20 @@ public class NewsAnaly {
 								||noun.startsWith("주")||noun.startsWith("임")||noun.startsWith("나")
 								||noun.startsWith("신")||noun.startsWith("민")||noun.startsWith("진")
 								||noun.startsWith("지")||noun.startsWith("엄")||noun.startsWith("원")
-								||noun.startsWith("채")){
+								||noun.startsWith("채"))){
 
-							probLastName = 0.55;
+							probLastName = prLastName;
 						}
 						else{
-							probLastName = 0.10;
+							probLastName = 1 - prLastName;
 						}
 
 						//사전에 나오는 단어는 이름이 아님
-						probNotDicWord = 0.99;
+						probNotDicWord = prDic;
 
 						for(int diccnt=0; diccnt<dic.length; diccnt++){
 							if(noun.equals(dic[diccnt])) {
-								probNotDicWord = 0.01;
+								probNotDicWord = 1 - prDic;
 							}
 						}
 
@@ -401,10 +415,10 @@ public class NewsAnaly {
 							}
 						}
 						if(isNotSyntNoun == true){
-							probNotSyntNoun = 0.7;
+							probNotSyntNoun = prSynt;
 						}
 						else{
-							probNotSyntNoun = 0.3;
+							probNotSyntNoun = 1 - prSynt;
 						}
 
 						//확률 계산
@@ -416,5 +430,31 @@ public class NewsAnaly {
 				}			
 			}				
 		return result;
+		
+	}
+	
+	//Calculate Precision, Recall, F-measure for NER Tagging Performance
+	public static double[] performanceScore(WordVector result, String trueAnswer){
+		double[] score = new double[3];
+		double precision = 0;
+		double recall = 0;
+		double fmeasure = 0;
+		int truePositive = 0;
+		String[] predNames = result.toStringArray();	
+		String[] answers = trueAnswer.split(" ");
+		
+		for(String answer : answers){
+			for(int cnt=0; cnt<predNames.length; cnt++){
+				if(answer.contains(predNames[cnt])) truePositive++;
+			}
+		}
+		recall = (double)truePositive / answers.length;
+		precision = (double)truePositive / predNames.length;
+		fmeasure = (2 * recall * precision) / (recall + precision);
+		score[0] = precision;
+		score[1] = recall;
+		score[2] = fmeasure;
+		System.out.println("P : "+score[0]+", R : "+score[1]+", F : "+score[2]);
+		return score;
 	}
 }
